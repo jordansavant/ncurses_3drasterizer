@@ -180,13 +180,34 @@ int main(void) {
 	t3.points[2].coords[1] = 15;
 
 	// loop render
+	char g = ' ';
 	do {
+		clear();
 		//plot(stdscr, 1, 1, BLACK_GREEN);
 		//draw_scanline(stdscr, 10, 3, 19, BLACK_BLUE);
 		rasterize_triangle(stdscr, &t1, BLACK_RED);
 		rasterize_triangle(stdscr, &t2, BLACK_BLUE);
 		rasterize_triangle(stdscr, &t3, BLACK_GREEN);
-	} while (getch() != 'x');
+
+		g = getch();
+
+		if (g == 'd') {
+			t2.points[1].coords[0]++;
+			t3.points[2].coords[0]++;
+		}
+		if (g == 'a') {
+			t2.points[1].coords[0]--;
+			t3.points[2].coords[0]--;
+		}
+		if (g == 'w') {
+			t2.points[1].coords[1]--;
+			t3.points[2].coords[1]--;
+		}
+		if (g == 's') {
+			t2.points[1].coords[1]++;
+			t3.points[2].coords[1]++;
+		}
+	} while (g != 'x');
 
 
 	xlogclose();
