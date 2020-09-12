@@ -6,6 +6,13 @@ Recently I have been doing a lot of C and NCurses for a roguelike game and decid
 
 Of course colors is a trick unless you compile NCurses with 256 colors, so it will be limited to main colors with ascii characters to shade it.
 
-`gcc main_rasterize_triangle.c -lncurses && ./a.out` 
+
+## Triangle Rasterization Technique
+
+This stage of the work just does scanline rendering of a generalized triangle struct. It plots with `move` and `addch`.
+
+```
+$ gcc main_rasterize_triangle.c -lncurses && ./a.out\
+```
 
 ![](https://github.com/jordansavant/ncurses_3drasterizer/raw/master/NCursesTriangles.png)
