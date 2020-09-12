@@ -1,12 +1,33 @@
 #include <stdio.h>
 #include <stdbool.h>
+#include <stdarg.h>
 #include <ncurses.h>
 
 #define BLACK_RED 1
 #define BLACK_GREEN 2
 #define BLACK_BLUE 3
 
-int ncurses_setup() {
+FILE* _fp;
+void xlogopen(char *location, char *mode) {
+	_fp = fopen(location, mode);
+}
+void xlogclose() {
+	fclose(_fp);
+}
+void xlog(char *msg) {
+	fprintf(_fp, "%s\n", msg);
+	fflush(_fp);
+}
+void xlogf(char *format, ...) {
+	va_list argptr;
+	va_start(argptr, format);
+	vfprintf(_fp, format, argptr);
+	fprintf(_fp, "\n");
+	va_end(argptr);
+	fflush(_fp);
+}
+
+bool ncurses_setup() {
 	// setup ncurses window
 	initscr();
 	if (has_colors()) {
@@ -14,12 +35,12 @@ int ncurses_setup() {
 	} else {
 		printf("%s\n", "Colors not supported on this terminal");
 		endwin(); // cleanup
-		return 1;
+		return false;
 	}
 	curs_set(0); // hide cursor
 	noecho();
 	keypad(stdscr, true); // turn on F key listening
-	return 0;
+	return true;
 }
 
 void ncurses_teardown() {
@@ -58,6 +79,7 @@ void plot(WINDOW* win, int x, int y, int colorpair) {
 }
 
 void draw_scanline(WINDOW* win, int y, int x1, int x2, int cp) {
+	xlogf("dsline y=%d x1=%d x2=%d", y, x1, x2);
 	for (int x=x1; x < x2; x++) {
 		plot(win, x, y, cp);
 	}
@@ -82,7 +104,7 @@ void rasterize_triangle(WINDOW* win, struct Triangle *t, int colorpair) {
 	// order points by y coordinate descending, top point first
 	// when y is equal order by xcoords (todo)
 	if (y1 < y0) {
-		swap(&x0,&x1); swap(&y0,&y1);// swap(p0,p1)
+		swap(&x0,&x1); swap(&y0,&y1);// swap(p0,p1) (I think this is for efficiency only)
 	}
 	if (y2 < y0) {
 		swap(&x0,&x2); swap(&y0,&y2);// swap(p0,p2)
@@ -122,9 +144,10 @@ void rasterize_triangle(WINDOW* win, struct Triangle *t, int colorpair) {
 }
 
 int main(void) {
-	int exit = ncurses_setup();
-	if (exit)
-		return exit;
+	if (!ncurses_setup())
+		return 1;
+	xlogopen("logs/log.txt", "w+");
+	xlog("-------\nSTART\n-------");
 
 	// colors id, fg, bg
 	init_pair(BLACK_RED, COLOR_BLACK, COLOR_RED);
@@ -132,24 +155,41 @@ int main(void) {
 	init_pair(BLACK_BLUE, COLOR_BLACK, COLOR_BLUE);
 
 	// build triangle
-	struct Triangle t;
-	t.points[0].coords[0] = 2;
-	t.points[0].coords[1] = 2;
+	struct Triangle t1;
+	t1.points[0].coords[0] = 0;
+	t1.points[0].coords[1] = 0;
+	t1.points[1].coords[0] = 19;
+	t1.points[1].coords[1] = 4;
+	t1.points[2].coords[0] = 6;
+	t1.points[2].coords[1] = 22;
 
-	t.points[1].coords[0] = 19;
-	t.points[1].coords[1] = 4;
+	struct Triangle t2;
+	t2.points[0].coords[0] = 19;
+	t2.points[0].coords[1] = 4;
+	t2.points[1].coords[0] = 33;
+	t2.points[1].coords[1] = 15;
+	t2.points[2].coords[0] = 6;
+	t2.points[2].coords[1] = 22;
 
-	t.points[2].coords[0] = 6;
-	t.points[2].coords[1] = 22;
+	struct Triangle t3;
+	t3.points[0].coords[0] = 19;
+	t3.points[0].coords[1] = 4;
+	t3.points[1].coords[0] = 29;
+	t3.points[1].coords[1] = 0;
+	t3.points[2].coords[0] = 33;
+	t3.points[2].coords[1] = 15;
 
 	// loop render
 	do {
 		//plot(stdscr, 1, 1, BLACK_GREEN);
 		//draw_scanline(stdscr, 10, 3, 19, BLACK_BLUE);
-		rasterize_triangle(stdscr, &t, BLACK_RED);
+		rasterize_triangle(stdscr, &t1, BLACK_RED);
+		rasterize_triangle(stdscr, &t2, BLACK_BLUE);
+		rasterize_triangle(stdscr, &t3, BLACK_GREEN);
 	} while (getch() != 'x');
 
 
+	xlogclose();
 	ncurses_teardown();
 	return 0;
 }
