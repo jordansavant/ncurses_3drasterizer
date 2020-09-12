@@ -27,6 +27,10 @@ void xlogf(char *format, ...) {
 	fflush(_fp);
 }
 
+// screen sizes;
+int W = 0;
+int H = 0;
+
 bool ncurses_setup() {
 	// setup ncurses window
 	initscr();
@@ -40,6 +44,8 @@ bool ncurses_setup() {
 	curs_set(0); // hide cursor
 	noecho();
 	keypad(stdscr, true); // turn on F key listening
+
+	getmaxyx(stdscr, H, W);
 	return true;
 }
 
@@ -49,6 +55,13 @@ void ncurses_teardown() {
 	curs_set(1);
 	echo();
 	endwin();
+}
+
+void gclear(WINDOW *win, int H) {
+	for (int y=0; y < H; y++) {
+		wmove(win, y, 0);
+		wclrtoeol(win);
+	}
 }
 
 
@@ -70,6 +83,9 @@ void swap(int *xp, int *yp) {
 }
 
 void plot(WINDOW* win, int x, int y, int colorpair) {
+	if (x < 0 || x > W-1) return;
+	if (y < 0 || y > H-1) return;
+
 	attrset(COLOR_PAIR(colorpair));
 	// times 2 plus 1 to render 1 coord as ascii square
 	move(y, x * 2);
@@ -182,7 +198,10 @@ int main(void) {
 	// loop render
 	char g = ' ';
 	do {
-		clear();
+		// get screen dimensions
+		getmaxyx(stdscr, H, W);
+		gclear(stdscr, H);
+
 		//plot(stdscr, 1, 1, BLACK_GREEN);
 		//draw_scanline(stdscr, 10, 3, 19, BLACK_BLUE);
 		rasterize_triangle(stdscr, &t1, BLACK_RED);
